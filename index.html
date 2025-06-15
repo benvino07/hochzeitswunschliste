@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hochzeitswunschliste</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
+    h1 { color: #9c27b0; }
+    input, textarea, select, button { display: block; margin-top: 0.5em; padding: 0.5em; width: 100%; }
+    ul { padding-left: 1em; }
+    li { margin-bottom: 1em; }
+    .reserved { text-decoration: line-through; color: gray; }
+  </style>
+</head>
+<body>
+  <h1>Hochzeitswunschliste</h1>
+
+  <section>
+    <h2>Geschenkwunsch eintragen (Brautpaar)</h2>
+    <input id="wish-text" placeholder="Wunschbeschreibung" />
+    <button onclick="addWish()">Wunsch hinzufügen</button>
+  </section>
+
+  <section>
+    <h2>Wunschliste</h2>
+    <ul id="wishlist"></ul>
+  </section>
+
+  <script>
+    // Supabase Setup
+    const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvamNjc2ZkZnJrdW96cXhqY3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODczOTEsImV4cCI6MjA2NTU2MzM5MX0.wNO2Mxq3WLqFO-2I84_EyATSEvqaw4saLlIhv9oyGXg';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function addWish() {
+      const text = document.getElementById('wish-text').value;
+      if (!text) return alert('Bitte Wunsch eingeben');
+      const { error } = await supabase.from('wishes').insert([{ text }]);
+      if (error) alert('Fehler: ' + error.message);
+      else {
+        document.getElementById('wish-text').value = '';
+        loadWishes();
+      }
+    }
+
+    async function reserveWish(id) {
+      const name = prompt('Dein Name?');
+      if (!name) return;
+      await supabase.from('wishes').update({ reserved_by: name }).eq('id', id);
+      loadWishes();
+    }
+
+    async function loadWishes() {
+      const { data } = await supabase.from('wishes').select('*').order('id');
+      const list = document.getElementById('wishlist');
+      list.innerHTML = '';
+      data.forEach(wish => {
+        const item = document.createElement('li');
+        item.innerHTML = `
+          <span class="${wish.reserved_by ? 'reserved' : ''}">
+            ${wish.text} ${wish.reserved_by ? `(Reserviert von ${wish.reserved_by})` : ''}
+          </span><br />
+          ${!wish.reserved_by ? `<button onclick="reserveWish(${wish.id})">Ich schenke das!</button>` : ''}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    loadWishes();
+  </script>
+</body>
+</html>
