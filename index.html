@@ -3,21 +3,93 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geschenke für das Brautpaar</title>
+  <title>Geschenke für Clara & Simon</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
-    h1 { color: #4caf50; }
-    input, button { display: block; margin-top: 0.5em; padding: 0.5em; width: 100%; }
-    li { margin-bottom: 1.5em; display: flex; gap: 1em; align-items: flex-start; background: #f8f8f8; padding: 1em; border-radius: 8px; }
-    .emoji { font-size: 2em; width: 60px; text-align: center; }
-    .content-wrapper { flex: 1; }
-    .beitrag { color: #555; font-size: 0.9em; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    header {
+      background-color: #4caf50;
+      color: white;
+      padding: 1em;
+      text-align: center;
+    }
+    main {
+      max-width: 800px;
+      margin: 2em auto;
+      padding: 0 1em;
+    }
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 0.2em;
+    }
+    p.intro {
+      font-size: 1.1em;
+      color: #555;
+      margin-bottom: 2em;
+    }
+    input, button {
+      display: block;
+      margin-top: 0.5em;
+      padding: 0.6em;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a045;
+    }
+    li {
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      margin-bottom: 1.5em;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      gap: 1em;
+      flex-direction: row;
+      align-items: flex-start;
+    }
+    .emoji {
+      font-size: 2em;
+      width: 60px;
+      text-align: center;
+    }
+    .content-wrapper {
+      flex: 1;
+    }
+    .beitrag {
+      color: #555;
+      font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
-  <h1>Geschenkbeiträge</h1>
-  <ul id="wishlist"></ul>
+  <header>
+    <h1>Geschenke für Clara & Simon</h1>
+  </header>
+  <main>
+    <p class="intro">
+      Clara und Simon heiraten! 🎉<br />
+      Um ihnen eine besondere Freude zu machen, haben wir als Gäste die Möglichkeit,
+      uns an ihren Herzenswünschen zu beteiligen – entweder allein oder gemeinsam mit anderen.<br />
+      Ich, Ben – der Trauzeuge – organisiere diese Wunschseite. Danke, dass ihr dabei seid!
+    </p>
+
+    <ul id="wishlist"></ul>
+  </main>
 
   <script>
     const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
