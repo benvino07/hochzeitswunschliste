@@ -15,6 +15,7 @@
     .controls { margin-top: 0.5em; display: flex; gap: 0.5em; flex-wrap: wrap; }
     .controls button { flex: 1; padding: 0.4em; font-size: 0.9em; cursor: pointer; }
     .status { font-size: 0.9em; color: #555; margin-top: 0.3em; }
+    .intro { background: #f0e7fa; padding: 1em; border-radius: 5px; margin-bottom: 2em; color: #333; }
   </style>
 </head>
 <body>
@@ -26,6 +27,15 @@
 
   <div id="main" style="display:none">
     <h1>Wünsche eintragen (nur Brautpaar)</h1>
+
+    <div class="intro">
+      <p><strong>Liebe Clara, lieber Simon,</strong></p>
+      <p>schön, dass ihr da seid! Hier könnt ihr eure persönlichen Wünsche für die Hochzeit hinterlegen – vom konkreten Gegenstand bis hin zu gemeinsamen Aktivitäten mit euren Liebsten.</p>
+      <p>Gäste können auf der separaten Seite (die nur sie sehen) eintragen, wie viel sie zu welchem Wunsch beitragen möchten. Sobald jemand etwas zugesagt hat, seht ihr das hier in der Übersicht. Falls ihr einen Wunsch bearbeiten oder löschen möchtet: das geht ebenfalls, aber nur solange sich noch niemand beteiligt hat.</p>
+      <p>Und ja – ihr könnt die Liste per Drag-and-Drop auch neu sortieren ✨</p>
+      <p>Viel Freude damit!<br>Euer Trauzeuge Ben</p>
+    </div>
+
     <input id="wish-text" placeholder="Wunschbeschreibung" />
     <input id="wish-amount" type="number" placeholder="Gewünschter Betrag in €" />
     <button onclick="addWish()">Wunsch speichern</button>
