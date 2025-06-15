@@ -57,6 +57,22 @@
       border-radius: 8px;
       margin-bottom: 1.5em;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      gap: 1em;
+      flex-direction: row;
+      align-items: flex-start;
+    }
+    .wish-image {
+      flex: 0 0 60px;
+    }
+    .wish-image img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    .wish-content {
+      flex: 1;
     }
     .contribution-info {
       margin-top: 0.5em;
@@ -73,7 +89,7 @@
     <p class="intro">
       Clara und Simon heiraten! 🎉<br />
       Um ihnen eine besondere Freude zu machen, haben wir als Gäste die Möglichkeit,
-      uns an ihrer Wunschliste u beteiligen – entweder allein oder gemeinsam mit anderen.<br />
+      uns an ihren Herzenswünschen zu beteiligen – entweder allein oder gemeinsam mit anderen.<br />
       Ich, Ben – der Trauzeuge – organisiere diese Wunschseite. Danke, dass ihr dabei seid!
     </p>
 
@@ -85,6 +101,25 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvamNjc2ZkZnJrdW96cXhqY3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODczOTEsImV4cCI6MjA2NTU2MzM5MX0.wNO2Mxq3WLqFO-2I84_EyATSEvqaw4saLlIhv9oyGXg';
     const { createClient } = supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function getImageURL(wishText) {
+      const map = {
+        'Brotmesser': 'https://cdn.pixabay.com/photo/2016/03/05/20/07/knife-1238860_1280.jpg',
+        'Strandzelt': 'https://cdn.pixabay.com/photo/2016/02/19/10/00/beach-1209729_1280.jpg',
+        'Wochenendtrip': 'https://cdn.pixabay.com/photo/2017/06/29/20/46/suitcase-2459227_1280.jpg',
+        'Tagestrip': 'https://cdn.pixabay.com/photo/2015/01/08/18/25/map-593232_1280.jpg',
+        'Aktivitäten': 'https://cdn.pixabay.com/photo/2016/11/29/10/06/adventure-1868817_1280.jpg',
+        'Salatschleuder': 'https://cdn.pixabay.com/photo/2016/03/05/19/02/salad-1238273_1280.jpg',
+        'Sonos': 'https://cdn.pixabay.com/photo/2021/08/24/21/23/speaker-6571994_1280.jpg',
+        'Koffer': 'https://cdn.pixabay.com/photo/2014/12/10/20/57/baggage-563861_1280.jpg',
+        'Tischtennis': 'https://cdn.pixabay.com/photo/2017/02/13/15/28/table-tennis-2063611_1280.jpg',
+        'Reise': 'https://cdn.pixabay.com/photo/2015/07/03/14/39/airplane-829392_1280.jpg'
+      };
+      for (const key in map) {
+        if (wishText.includes(key)) return map[key];
+      }
+      return 'https://cdn.pixabay.com/photo/2017/01/31/18/14/gift-2023025_1280.png';
+    }
 
     async function loadWishes() {
       const { data: wishes } = await client.from('wishes').select('*').order('id');
@@ -98,7 +133,14 @@
         const total = related.reduce((sum, c) => sum + Number(c.amount_contributed), 0);
 
         const item = document.createElement('li');
-        item.innerHTML = `
+
+        const image = document.createElement('div');
+        image.className = 'wish-image';
+        image.innerHTML = `<img src="${getImageURL(wish.text)}" alt="Bild">`;
+
+        const content = document.createElement('div');
+        content.className = 'wish-content';
+        content.innerHTML = `
           <strong>${wish.text}</strong><br />
           <span class="contribution-info">
             Wunschbetrag: ${wish.amount} €<br />
@@ -108,6 +150,9 @@
           <input type="number" id="amount-${wish.id}" placeholder="Betrag in €" />
           <button onclick="contribute(${wish.id})">Ich beteilige mich</button>
         `;
+
+        item.appendChild(image);
+        item.appendChild(content);
         list.appendChild(item);
       });
     }
