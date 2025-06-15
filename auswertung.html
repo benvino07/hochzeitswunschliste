@@ -68,7 +68,7 @@
       if (!confirm('Bist du dir ganz sicher?')) return;
       const { error } = await client.from('wishes').delete().eq('id', id);
       if (error) alert('Fehler: ' + error.message);
-      else await loadWishes();
+      else loadWishes();
     }
 
     async function deleteContribution(id) {
@@ -76,7 +76,7 @@
       if (!confirm('Bist du dir ganz sicher?')) return;
       const { error } = await client.from('contributions').delete().eq('id', id);
       if (error) alert('Fehler: ' + error.message);
-      else await loadWishes();
+      else loadWishes();
     }
 
     async function loadWishes() {
