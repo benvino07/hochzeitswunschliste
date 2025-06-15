@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wünsche eintragen (Admin)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
+    h1 { color: #9c27b0; }
+    input, button { margin-top: 0.5em; padding: 0.5em; width: 100%; }
+    ul { margin-top: 1em; }
+    li { margin-bottom: 0.5em; }
+  </style>
+</head>
+<body>
+  <h1>Wünsche eintragen (nur Brautpaar)</h1>
+  <input id="wish-text" placeholder="Wunschbeschreibung" />
+  <input id="wish-amount" type="number" placeholder="Gewünschter Betrag in €" />
+  <button onclick="addWish()">Wunsch speichern</button>
+
+  <h2>Aktuelle Wunschliste</h2>
+  <ul id="wishlist"></ul>
+
+  <script>
+    const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvamNjc2ZkZnJrdW96cXhqY3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODczOTEsImV4cCI6MjA2NTU2MzM5MX0.wNO2Mxq3WLqFO-2I84_EyATSEvqaw4saLlIhv9oyGXg';
+    const { createClient } = supabase;
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function addWish() {
+      const text = document.getElementById('wish-text').value;
+      const amount = parseFloat(document.getElementById('wish-amount').value);
+      if (!text || isNaN(amount)) return alert('Bitte Wunsch und Betrag eingeben');
+      const { error } = await client.from('wishes').insert([{ text, amount }]);
+      if (error) alert('Fehler: ' + error.message);
+      else {
+        document.getElementById('wish-text').value = '';
+        document.getElementById('wish-amount').value = '';
+        loadWishes();
+      }
+    }
+
+    async function loadWishes() {
+      const { data } = await client.from('wishes').select('*').order('id');
+      const list = document.getElementById('wishlist');
+      list.innerHTML = '';
+      data.forEach(wish => {
+        const item = document.createElement('li');
+        item.textContent = `${wish.text} – ${wish.amount} €`;
+        list.appendChild(item);
+      });
+    }
+
+    loadWishes();
+  </script>
+</body>
+</html>
