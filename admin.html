@@ -1,181 +1,20 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wünsche eintragen (Admin)</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  <style>
-    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
-    h1 { color: #9c27b0; }
-    input, button { margin-top: 0.5em; padding: 0.5em; width: 100%; }
-    ul { margin-top: 1em; padding: 0; list-style: none; }
-    li { margin-bottom: 1em; padding: 1em; background: #f9f9f9; border-radius: 5px; cursor: move; }
-    .controls { margin-top: 0.5em; display: flex; gap: 0.5em; flex-wrap: wrap; }
-    .controls button { flex: 1; padding: 0.4em; font-size: 0.9em; cursor: pointer; }
-    .status { font-size: 0.9em; color: #555; margin-top: 0.3em; }
-    .intro { background: #f0e7fa; padding: 1em; border-radius: 5px; margin-bottom: 2em; color: #333; }
-  </style>
-</head>
-<body>
-  <div id="login">
-    <h1>Admin-Zugang</h1>
-    <input type="password" id="pw" placeholder="Passwort" />
-    <button onclick="checkPW()">Einloggen</button>
-  </div>
-
-  <div id="main" style="display:none">
-    <h1>Wünsche eintragen (nur Brautpaar)</h1>
-
-    <div class="intro">
-      <p><strong>Liebe Clara, lieber Simon,</strong></p>
-      <p>schön, dass ihr da seid! Hier könnt ihr eure persönlichen Wünsche für die Hochzeit hinterlegen – vom konkreten Gegenstand bis hin zu gemeinsamen Aktivitäten mit euren Liebsten.</p>
-      <p>Gäste können auf der separaten Seite (die nur sie sehen) eintragen, wie viel sie zu welchem Wunsch beitragen möchten. Sobald jemand etwas zugesagt hat, seht ihr das hier in der Übersicht. Falls ihr einen Wunsch bearbeiten oder löschen möchtet: das geht ebenfalls, aber nur solange sich noch niemand beteiligt hat.</p>
-      <p>Und ja – ihr könnt die Liste per Drag-and-Drop auch neu sortieren ✨</p>
-      <p>Viel Freude damit!<br>Euer Trauzeuge Ben</p>
-    </div>
-
-    <input id="wish-text" placeholder="Wunschbeschreibung" />
-    <input id="wish-amount" type="number" placeholder="Gewünschter Betrag in €" />
-    <button onclick="addWish()">Wunsch speichern</button>
-
-    <h2>Aktuelle Wunschliste</h2>
-    <ul id="wishlist"></ul>
-  </div>
-
-  <script>
-    const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvamNjc2ZkZnJrdW96cXhqY3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODczOTEsImV4cCI6MjA2NTU2MzM5MX0.wNO2Mxq3WLqFO-2I84_EyATSEvqaw4saLlIhv9oyGXg';
-    const { createClient } = supabase;
-    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    document.addEventListener('DOMContentLoaded', () => {
-      if (document.cookie.includes('admin_authenticated=true')) {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('main').style.display = 'block';
-        loadWishes();
-      }
-    });
-
-    async function checkPW() {
-      const entered = document.getElementById('pw').value.trim();
-      const { data, error } = await client
-        .from('passwords')
-        .select('pw')
-        .eq('context', 'admin')
-        .maybeSingle();
-
-      if (error || !data) {
-        return alert('Fehler beim Abrufen des Passworts');
-      }
-
-      if (entered === data.pw) {
-        document.cookie = "admin_authenticated=true; path=/; max-age=3600";
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('main').style.display = 'block';
-        loadWishes();
-      } else {
-        alert('Falsches Passwort');
-      }
-    }
-
-    async function addWish() {
-      const text = document.getElementById('wish-text').value.trim();
-      const amount = parseFloat(document.getElementById('wish-amount').value);
-      if (!text || isNaN(amount)) return alert('Bitte Wunsch und Betrag eingeben');
-      const { data, error } = await client.from('wishes').insert([{ text, amount }]).select();
-      if (error) alert('Fehler: ' + error.message);
-      else {
-        await updateSortOrder();
-        document.getElementById('wish-text').value = '';
-        document.getElementById('wish-amount').value = '';
-        await loadWishes();
-      }
-    }
-
-    async function deleteWish(id) {
-      const { error } = await client.from('wishes').delete().eq('id', id);
-      if (error) alert('Fehler beim Löschen: ' + error.message);
-      else await loadWishes();
-    }
-
-    async function editText(id, oldText) {
-      const newText = prompt('Neuer Wunschtext:', oldText);
-      if (newText === null || newText.trim() === '') return;
-      const { error } = await client.from('wishes').update({ text: newText }).eq('id', id);
-      if (error) alert('Fehler beim Ändern: ' + error.message);
-      else await loadWishes();
-    }
-
-    async function editAmount(id, oldAmount) {
-      const newAmount = parseFloat(prompt('Neuer Betrag in €:', oldAmount));
-      if (isNaN(newAmount)) return alert('Ungültiger Betrag');
-      const { error } = await client.from('wishes').update({ amount: newAmount }).eq('id', id);
-      if (error) alert('Fehler beim Ändern: ' + error.message);
-      else await loadWishes();
-    }
-
-    async function loadWishes() {
-      const { data: wishes, error: wishError } = await client.from('wishes').select('*').order('sort_order');
-      const { data: contributions, error: contribError } = await client.from('contributions').select('*');
-      if (wishError || contribError) {
-        alert('Fehler beim Laden der Daten.');
-        return;
-      }
-
-      const list = document.getElementById('wishlist');
-      list.innerHTML = '';
-
-      wishes.forEach(wish => {
-        const related = contributions.filter(c => c.wish_id === wish.id);
-        const li = document.createElement('li');
-        li.setAttribute('data-id', wish.id);
-
-        li.innerHTML = `<strong>${wish.text}</strong> – ${wish.amount} €<br />
-          <span class="status">${related.length > 0 ? '(bereits Beteiligungen)' : '(noch frei)'}</span>`;
-
-        const ctrl = document.createElement('div');
-        ctrl.className = 'controls';
-
-        const editTextBtn = document.createElement('button');
-        editTextBtn.textContent = '✏️ Text ändern';
-        editTextBtn.onclick = async () => await editText(wish.id, wish.text);
-        ctrl.appendChild(editTextBtn);
-
+...
         const editAmountBtn = document.createElement('button');
         editAmountBtn.textContent = '💶 Betrag ändern';
         editAmountBtn.onclick = async () => await editAmount(wish.id, wish.amount);
         ctrl.appendChild(editAmountBtn);
 
-        if (related.length === 0) {
-          const delBtn = document.createElement('button');
-          delBtn.textContent = '🗑️ Löschen';
-          delBtn.onclick = async () => {
-            if (confirm('Wunsch wirklich löschen?')) await deleteWish(wish.id);
-          };
-          ctrl.appendChild(delBtn);
-        }
-
-        li.appendChild(ctrl);
-        list.appendChild(li);
-      });
-
-      new Sortable(list, {
-        animation: 150,
-        onEnd: async function () {
-          await updateSortOrder();
-        }
-      });
+        const editUrlBtn = document.createElement('button');
+        editUrlBtn.textContent = '🔗 Link ändern';
+        editUrlBtn.onclick = async () => await editUrl(wish.id, wish.url);
+        ctrl.appendChild(editUrlBtn);
+...
+    async function editUrl(id, oldUrl) {
+      const newUrl = prompt('Neuer Link (optional):', oldUrl || '');
+      if (newUrl === null) return;
+      const trimmed = newUrl.trim();
+      const { error } = await client.from('wishes').update({ url: trimmed }).eq('id', id);
+      if (error) alert('Fehler beim Ändern: ' + error.message);
+      else await loadWishes();
     }
-
-    async function updateSortOrder() {
-      const listItems = document.querySelectorAll('#wishlist li');
-      for (let i = 0; i < listItems.length; i++) {
-        const id = parseInt(listItems[i].getAttribute('data-id'));
-        await client.from('wishes').update({ sort_order: i }).eq('id', id);
-      }
-    }
-  </script>
-</body>
-</html>
+...
