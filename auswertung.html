@@ -3,20 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beitragsübersicht</title>
+  <title>Auswertung (geschützt)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 2em auto; }
-    h1 { color: #3f51b5; }
-    .wish-block { margin-bottom: 2em; }
-    .wish-title { font-weight: bold; font-size: 1.2em; margin-bottom: 0.3em; }
-    .contribution { margin-left: 1em; font-size: 0.95em; color: #555; }
-    .summary { margin-top: 0.5em; font-style: italic; }
+    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
+    h1 { color: #9c27b0; }
+    input, button { margin-top: 0.5em; padding: 0.5em; width: 100%; }
+    ul { margin-top: 1em; padding: 0; list-style: none; }
+    li { margin-bottom: 1em; padding: 1em; background: #f9f9f9; border-radius: 5px; }
+    .controls { margin-top: 0.5em; display: flex; gap: 0.5em; }
+    .controls button { flex: 1; padding: 0.4em; font-size: 0.9em; }
+    .status { font-size: 0.9em; color: #555; margin-top: 0.3em; }
   </style>
 </head>
 <body>
-  <h1>Übersicht: Wer schenkt was?</h1>
-  <div id="output"></div>
+  <div id="login">
+    <h1>Passwort erforderlich</h1>
+    <input type="password" id="pw" placeholder="Passwort eingeben" />
+    <button onclick="checkPW()">Anmelden</button>
+  </div>
+
+  <div id="main" style="display:none">
+    <h1>Wünsche eintragen (nur Brautpaar)</h1>
+    <input id="wish-text" placeholder="Wunschbeschreibung" />
+    <input id="wish-amount" type="number" placeholder="Gewünschter Betrag in €" />
+    <button onclick="addWish()">Wunsch speichern</button>
+
+    <h2>Aktuelle Wunschliste</h2>
+    <ul id="wishlist"></ul>
+  </div>
 
   <script>
     const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
@@ -24,46 +39,78 @@
     const { createClient } = supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function loadData() {
-      const { data: wishes } = await client.from('wishes').select('*');
-      const { data: contributions } = await client.from('contributions').select('*');
-
-      const container = document.getElementById('output');
-      container.innerHTML = '';
-
-      wishes.forEach(wish => {
-        const block = document.createElement('div');
-        block.classList.add('wish-block');
-
-        const title = document.createElement('div');
-        title.classList.add('wish-title');
-        title.textContent = `${wish.text} – Gewünscht: ${wish.amount} €`;
-        block.appendChild(title);
-
-        const relevant = contributions.filter(c => c.wish_id === wish.id);
-        let total = 0;
-
-        if (relevant.length === 0) {
-          block.innerHTML += '<div class="contribution">Noch keine Beteiligungen</div>';
-        } else {
-          relevant.forEach(c => {
-            total += Number(c.amount_contributed);
-            const line = document.createElement('div');
-            line.classList.add('contribution');
-            line.textContent = `${c.contributor} beteiligt sich mit ${c.amount_contributed} €`;
-            block.appendChild(line);
-          });
-          const summary = document.createElement('div');
-          summary.classList.add('summary');
-          summary.textContent = `Insgesamt zugesagt: ${total} €`;
-          block.appendChild(summary);
-        }
-
-        container.appendChild(block);
-      });
+    function checkPW() {
+      const entered = document.getElementById('pw').value.trim();
+      if (entered === 'benella') {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('main').style.display = 'block';
+        loadWishes();
+      } else {
+        alert('Falsches Passwort');
+      }
     }
 
-    loadData();
+    async function addWish() {
+      const text = document.getElementById('wish-text').value;
+      const amount = parseFloat(document.getElementById('wish-amount').value);
+      if (!text || isNaN(amount)) return alert('Bitte Wunsch und Betrag eingeben');
+      const { error } = await client.from('wishes').insert([{ text, amount }]);
+      if (error) alert('Fehler: ' + error.message);
+      else {
+        document.getElementById('wish-text').value = '';
+        document.getElementById('wish-amount').value = '';
+        loadWishes();
+      }
+    }
+
+    async function deleteWish(id) {
+      if (confirm('Wunsch wirklich löschen?')) {
+        await client.from('wishes').delete().eq('id', id);
+        loadWishes();
+      }
+    }
+
+    async function editWish(id, oldText, oldAmount) {
+      const newText = prompt('Neuer Wunschtext:', oldText);
+      if (newText === null) return;
+      const newAmount = parseFloat(prompt('Neuer Betrag in €:', oldAmount));
+      if (isNaN(newAmount)) return alert('Ungültiger Betrag');
+      await client.from('wishes').update({ text: newText, amount: newAmount }).eq('id', id);
+      loadWishes();
+    }
+
+    async function loadWishes() {
+      const { data: wishes } = await client.from('wishes').select('*').order('id');
+      const { data: contributions } = await client.from('contributions').select('*');
+      const list = document.getElementById('wishlist');
+      list.innerHTML = '';
+
+      wishes.forEach(wish => {
+        const related = contributions.filter(c => c.wish_id === wish.id);
+        const li = document.createElement('li');
+
+        li.innerHTML = `<strong>${wish.text}</strong> – ${wish.amount} €<br />
+          <span class="status">${related.length > 0 ? '(bereits Beteiligungen)' : '(noch frei)'}</span>`;
+
+        const ctrl = document.createElement('div');
+        ctrl.className = 'controls';
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️ Bearbeiten';
+        editBtn.onclick = () => editWish(wish.id, wish.text, wish.amount);
+        ctrl.appendChild(editBtn);
+
+        if (related.length === 0) {
+          const delBtn = document.createElement('button');
+          delBtn.textContent = '🗑️ Löschen';
+          delBtn.onclick = () => deleteWish(wish.id);
+          ctrl.appendChild(delBtn);
+        }
+
+        li.appendChild(ctrl);
+        list.appendChild(li);
+      });
+    }
   </script>
 </body>
 </html>
