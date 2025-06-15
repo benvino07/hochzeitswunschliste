@@ -11,8 +11,8 @@
     input, button { margin-top: 0.5em; padding: 0.5em; width: 100%; }
     ul { margin-top: 1em; padding: 0; list-style: none; }
     li { margin-bottom: 1em; padding: 1em; background: #f9f9f9; border-radius: 5px; }
-    .controls { margin-top: 0.5em; display: flex; gap: 0.5em; }
-    .controls button { flex: 1; padding: 0.4em; font-size: 0.9em; }
+    .controls { margin-top: 0.5em; display: flex; gap: 0.5em; flex-wrap: wrap; }
+    .controls button { flex: 1; padding: 0.4em; font-size: 0.9em; cursor: pointer; }
     .status { font-size: 0.9em; color: #555; margin-top: 0.3em; }
   </style>
 </head>
@@ -32,7 +32,7 @@
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function addWish() {
-      const text = document.getElementById('wish-text').value;
+      const text = document.getElementById('wish-text').value.trim();
       const amount = parseFloat(document.getElementById('wish-amount').value);
       if (!text || isNaN(amount)) return alert('Bitte Wunsch und Betrag eingeben');
       const { error } = await client.from('wishes').insert([{ text, amount }]);
@@ -40,33 +40,40 @@
       else {
         document.getElementById('wish-text').value = '';
         document.getElementById('wish-amount').value = '';
-        loadWishes();
+        await loadWishes();
       }
     }
 
     async function deleteWish(id) {
       const { error } = await client.from('wishes').delete().eq('id', id);
       if (error) alert('Fehler beim Löschen: ' + error.message);
-      else loadWishes();
+      else await loadWishes();
     }
 
     async function editText(id, oldText) {
       const newText = prompt('Neuer Wunschtext:', oldText);
-      if (newText === null) return;
-      await client.from('wishes').update({ text: newText }).eq('id', id);
-      loadWishes();
+      if (newText === null || newText.trim() === '') return;
+      const { error } = await client.from('wishes').update({ text: newText }).eq('id', id);
+      if (error) alert('Fehler beim Ändern: ' + error.message);
+      else await loadWishes();
     }
 
     async function editAmount(id, oldAmount) {
       const newAmount = parseFloat(prompt('Neuer Betrag in €:', oldAmount));
       if (isNaN(newAmount)) return alert('Ungültiger Betrag');
-      await client.from('wishes').update({ amount: newAmount }).eq('id', id);
-      loadWishes();
+      const { error } = await client.from('wishes').update({ amount: newAmount }).eq('id', id);
+      if (error) alert('Fehler beim Ändern: ' + error.message);
+      else await loadWishes();
     }
 
     async function loadWishes() {
-      const { data: wishes } = await client.from('wishes').select('*').order('id');
-      const { data: contributions } = await client.from('contributions').select('*');
+      const { data: wishes, error: wishError } = await client.from('wishes').select('*').order('id');
+      const { data: contributions, error: contribError } = await client.from('contributions').select('*');
+      if (wishError || contribError) {
+        alert('Fehler beim Laden der Daten.');
+        return;
+      }
+
       const list = document.getElementById('wishlist');
       list.innerHTML = '';
 
@@ -82,19 +89,19 @@
 
         const editTextBtn = document.createElement('button');
         editTextBtn.textContent = '✏️ Text ändern';
-        editTextBtn.onclick = () => editText(wish.id, wish.text);
+        editTextBtn.onclick = async () => await editText(wish.id, wish.text);
         ctrl.appendChild(editTextBtn);
 
         const editAmountBtn = document.createElement('button');
         editAmountBtn.textContent = '💶 Betrag ändern';
-        editAmountBtn.onclick = () => editAmount(wish.id, wish.amount);
+        editAmountBtn.onclick = async () => await editAmount(wish.id, wish.amount);
         ctrl.appendChild(editAmountBtn);
 
         if (related.length === 0) {
           const delBtn = document.createElement('button');
           delBtn.textContent = '🗑️ Löschen';
-          delBtn.onclick = () => {
-            if (confirm('Wunsch wirklich löschen?')) deleteWish(wish.id);
+          delBtn.onclick = async () => {
+            if (confirm('Wunsch wirklich löschen?')) await deleteWish(wish.id);
           };
           ctrl.appendChild(delBtn);
         }
