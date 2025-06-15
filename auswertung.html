@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beitragsübersicht</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2em auto; }
+    h1 { color: #3f51b5; }
+    .wish-block { margin-bottom: 2em; }
+    .wish-title { font-weight: bold; font-size: 1.2em; margin-bottom: 0.3em; }
+    .contribution { margin-left: 1em; font-size: 0.95em; color: #555; }
+    .summary { margin-top: 0.5em; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>Übersicht: Wer schenkt was?</h1>
+  <div id="output"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvamNjc2ZkZnJrdW96cXhqY3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODczOTEsImV4cCI6MjA2NTU2MzM5MX0.wNO2Mxq3WLqFO-2I84_EyATSEvqaw4saLlIhv9oyGXg';
+    const { createClient } = supabase;
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadData() {
+      const { data: wishes } = await client.from('wishes').select('*');
+      const { data: contributions } = await client.from('contributions').select('*');
+
+      const container = document.getElementById('output');
+      container.innerHTML = '';
+
+      wishes.forEach(wish => {
+        const block = document.createElement('div');
+        block.classList.add('wish-block');
+
+        const title = document.createElement('div');
+        title.classList.add('wish-title');
+        title.textContent = `${wish.text} – Gewünscht: ${wish.amount} €`;
+        block.appendChild(title);
+
+        const relevant = contributions.filter(c => c.wish_id === wish.id);
+        let total = 0;
+
+        if (relevant.length === 0) {
+          block.innerHTML += '<div class="contribution">Noch keine Beteiligungen</div>';
+        } else {
+          relevant.forEach(c => {
+            total += Number(c.amount_contributed);
+            const line = document.createElement('div');
+            line.classList.add('contribution');
+            line.textContent = `${c.contributor} beteiligt sich mit ${c.amount_contributed} €`;
+            block.appendChild(line);
+          });
+          const summary = document.createElement('div');
+          summary.classList.add('summary');
+          summary.textContent = `Insgesamt zugesagt: ${total} €`;
+          block.appendChild(summary);
+        }
+
+        container.appendChild(block);
+      });
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
