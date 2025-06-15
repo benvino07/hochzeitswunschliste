@@ -11,9 +11,7 @@
     input, button { margin-top: 0.5em; padding: 0.5em; width: 100%; }
     ul { margin-top: 1em; padding: 0; list-style: none; }
     li { margin-bottom: 1em; padding: 1em; background: #f9f9f9; border-radius: 5px; }
-    .controls { margin-top: 0.5em; display: flex; gap: 0.5em; }
-    .controls button { flex: 1; padding: 0.4em; font-size: 0.9em; }
-    .status { font-size: 0.9em; color: #555; margin-top: 0.3em; }
+    .contributions { margin-top: 0.5em; font-size: 0.9em; color: #444; }
   </style>
 </head>
 <body>
@@ -24,12 +22,7 @@
   </div>
 
   <div id="main" style="display:none">
-    <h1>Wünsche eintragen (nur Brautpaar)</h1>
-    <input id="wish-text" placeholder="Wunschbeschreibung" />
-    <input id="wish-amount" type="number" placeholder="Gewünschter Betrag in €" />
-    <button onclick="addWish()">Wunsch speichern</button>
-
-    <h2>Aktuelle Wunschliste</h2>
+    <h1>Auswertung der Geschenkbeiträge</h1>
     <ul id="wishlist"></ul>
   </div>
 
@@ -50,64 +43,34 @@
       }
     }
 
-    async function addWish() {
-      const text = document.getElementById('wish-text').value;
-      const amount = parseFloat(document.getElementById('wish-amount').value);
-      if (!text || isNaN(amount)) return alert('Bitte Wunsch und Betrag eingeben');
-      const { error } = await client.from('wishes').insert([{ text, amount }]);
-      if (error) alert('Fehler: ' + error.message);
-      else {
-        document.getElementById('wish-text').value = '';
-        document.getElementById('wish-amount').value = '';
-        loadWishes();
-      }
-    }
-
-    async function deleteWish(id) {
-      if (confirm('Wunsch wirklich löschen?')) {
-        await client.from('wishes').delete().eq('id', id);
-        loadWishes();
-      }
-    }
-
-    async function editWish(id, oldText, oldAmount) {
-      const newText = prompt('Neuer Wunschtext:', oldText);
-      if (newText === null) return;
-      const newAmount = parseFloat(prompt('Neuer Betrag in €:', oldAmount));
-      if (isNaN(newAmount)) return alert('Ungültiger Betrag');
-      await client.from('wishes').update({ text: newText, amount: newAmount }).eq('id', id);
-      loadWishes();
-    }
-
     async function loadWishes() {
-      const { data: wishes } = await client.from('wishes').select('*').order('id');
+      const { data: wishes } = await client.from('wishes').select('*');
       const { data: contributions } = await client.from('contributions').select('*');
       const list = document.getElementById('wishlist');
       list.innerHTML = '';
 
-      wishes.forEach(wish => {
+      const enriched = wishes.map(wish => {
         const related = contributions.filter(c => c.wish_id === wish.id);
+        const total = related.reduce((sum, c) => sum + Number(c.amount_contributed), 0);
+        return { ...wish, related, total };
+      });
+
+      enriched.sort((a, b) => b.total - a.total);
+
+      enriched.forEach(wish => {
         const li = document.createElement('li');
+        li.innerHTML = `<strong>${wish.text}</strong> – ${wish.amount} €<br/>
+          <span>Bereits zugesagt: ${wish.total} €</span>`;
 
-        li.innerHTML = `<strong>${wish.text}</strong> – ${wish.amount} €<br />
-          <span class="status">${related.length > 0 ? '(bereits Beteiligungen)' : '(noch frei)'}</span>`;
-
-        const ctrl = document.createElement('div');
-        ctrl.className = 'controls';
-
-        const editBtn = document.createElement('button');
-        editBtn.textContent = '✏️ Bearbeiten';
-        editBtn.onclick = () => editWish(wish.id, wish.text, wish.amount);
-        ctrl.appendChild(editBtn);
-
-        if (related.length === 0) {
-          const delBtn = document.createElement('button');
-          delBtn.textContent = '🗑️ Löschen';
-          delBtn.onclick = () => deleteWish(wish.id);
-          ctrl.appendChild(delBtn);
+        if (wish.related.length > 0) {
+          const contribs = document.createElement('div');
+          contribs.className = 'contributions';
+          contribs.innerHTML = '<ul>' + wish.related.map(c => `
+            <li>${c.contributor}: ${c.amount_contributed} €</li>
+          `).join('') + '</ul>';
+          li.appendChild(contribs);
         }
 
-        li.appendChild(ctrl);
         list.appendChild(li);
       });
     }
