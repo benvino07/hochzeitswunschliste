@@ -40,6 +40,14 @@
     const { createClient } = supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.cookie.includes('admin_authenticated=true')) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('main').style.display = 'block';
+        loadWishes();
+      }
+    });
+
     async function checkPW() {
       const entered = document.getElementById('pw').value.trim();
       const { data, error } = await client
@@ -53,6 +61,7 @@
       }
 
       if (entered === data.pw) {
+        document.cookie = "admin_authenticated=true; path=/; max-age=3600";
         document.getElementById('login').style.display = 'none';
         document.getElementById('main').style.display = 'block';
         loadWishes();
