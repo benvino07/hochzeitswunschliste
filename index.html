@@ -117,7 +117,7 @@
     }
 
     async function loadWishes() {
-      const { data: wishes } = await client.from('wishes').select('*').order('id');
+      const { data: wishes } = await client.from('wishes').select('*').order('sort_order');
       const { data: contributions } = await client.from('contributions').select('*');
 
       const list = document.getElementById('wishlist');
