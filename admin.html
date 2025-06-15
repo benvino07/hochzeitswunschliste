@@ -1,20 +1,48 @@
-...
-        const editAmountBtn = document.createElement('button');
-        editAmountBtn.textContent = '💶 Betrag ändern';
-        editAmountBtn.onclick = async () => await editAmount(wish.id, wish.amount);
-        ctrl.appendChild(editAmountBtn);
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wünsche eintragen (Admin)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
+    h1 { color: #9c27b0; }
+    input, button { margin-top: 0.5em; padding: 0.5em; width: 100%; }
+    ul { margin-top: 1em; padding: 0; list-style: none; }
+    li { margin-bottom: 1em; padding: 1em; background: #f9f9f9; border-radius: 5px; cursor: move; }
+    .controls { margin-top: 0.5em; display: flex; gap: 0.5em; flex-wrap: wrap; }
+    .controls button { flex: 1; padding: 0.4em; font-size: 0.9em; cursor: pointer; }
+    .status { font-size: 0.9em; color: #555; margin-top: 0.3em; }
+    .intro { background: #f0e7fa; padding: 1em; border-radius: 5px; margin-bottom: 2em; color: #333; }
+  </style>
+</head>
+<body>
+  <!-- Der HTML-Rumpf bleibt unverändert -->
 
-        const editUrlBtn = document.createElement('button');
-        editUrlBtn.textContent = '🔗 Link ändern';
-        editUrlBtn.onclick = async () => await editUrl(wish.id, wish.url);
-        ctrl.appendChild(editUrlBtn);
-...
+  <script>
+    const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+    const { createClient } = supabase;
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     async function editUrl(id, oldUrl) {
-      const newUrl = prompt('Neuer Link (optional):', oldUrl || '');
-      if (newUrl === null) return;
-      const trimmed = newUrl.trim();
-      const { error } = await client.from('wishes').update({ url: trimmed }).eq('id', id);
-      if (error) alert('Fehler beim Ändern: ' + error.message);
-      else await loadWishes();
+      try {
+        const newUrl = prompt('Neuer Link (optional):', oldUrl || '');
+        if (newUrl === null) return;
+        const trimmed = newUrl.trim();
+        const { error } = await client.from('wishes').update({ url: trimmed }).eq('id', id);
+        if (error) {
+          console.error('Fehler beim URL-Update:', error);
+          alert('Fehler beim Ändern: ' + error.message);
+        } else {
+          await loadWishes();
+        }
+      } catch (err) {
+        console.error('Allgemeiner Fehler in editUrl:', err);
+      }
     }
-...
+  </script>
+</body>
+</html>
