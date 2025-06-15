@@ -65,16 +65,28 @@
 
     async function deleteWish(id) {
       if (!confirm('Wunsch wirklich löschen?')) return;
-      const { error } = await client.from('wishes').delete().eq('id', id);
-      if (error) alert('Fehler: ' + error.message);
+
+      // Lösche zuerst alle Beiträge zu diesem Wunsch
+      const { error: contribError } = await client.from('contributions').delete().eq('wish_id', id);
+      if (contribError) {
+        alert('Fehler beim Löschen der Beiträge: ' + contribError.message);
+        return;
+      }
+
+      // Dann Wunsch selbst löschen
+      const { error: wishError } = await client.from('wishes').delete().eq('id', id);
+      if (wishError) alert('Fehler beim Löschen des Wunschs: ' + wishError.message);
       else await loadWishes();
     }
 
     async function deleteContribution(id) {
       if (!confirm('Beitrag wirklich löschen?')) return;
       const { error } = await client.from('contributions').delete().eq('id', id);
-      if (error) alert('Fehler: ' + error.message);
-      else await loadWishes();
+      if (error) {
+        alert('Fehler beim Löschen des Beitrags: ' + error.message);
+      } else {
+        await loadWishes();
+      }
     }
 
     async function loadWishes() {
