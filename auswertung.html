@@ -12,6 +12,7 @@
     ul { margin-top: 1em; padding: 0; list-style: none; }
     li { margin-bottom: 1em; padding: 1em; background: #f9f9f9; border-radius: 5px; }
     .contributions { margin-top: 0.5em; font-size: 0.9em; color: #444; }
+    .inline-btn { background: none; border: none; color: red; cursor: pointer; font-size: 1em; }
   </style>
 </head>
 <body>
@@ -32,15 +33,41 @@
     const { createClient } = supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function checkPW() {
+    async function checkPW() {
       const entered = document.getElementById('pw').value.trim();
-      if (entered === 'benella') {
+      const { data, error } = await client
+        .from('passwords')
+        .select('pw')
+        .eq('context', 'auswertung')
+        .maybeSingle();
+
+      if (error || !data) {
+        return alert('Fehler beim Abrufen des Passworts');
+      }
+
+      if (entered === data.pw) {
         document.getElementById('login').style.display = 'none';
         document.getElementById('main').style.display = 'block';
         loadWishes();
       } else {
         alert('Falsches Passwort');
       }
+    }
+
+    async function deleteWish(id) {
+      if (!confirm('Wunsch wirklich löschen?')) return;
+      if (!confirm('Bist du dir ganz sicher?')) return;
+      const { error } = await client.from('wishes').delete().eq('id', id);
+      if (error) alert('Fehler: ' + error.message);
+      else loadWishes();
+    }
+
+    async function deleteContribution(id) {
+      if (!confirm('Beitrag wirklich löschen?')) return;
+      if (!confirm('Bist du dir ganz sicher?')) return;
+      const { error } = await client.from('contributions').delete().eq('id', id);
+      if (error) alert('Fehler: ' + error.message);
+      else loadWishes();
     }
 
     async function loadWishes() {
@@ -59,14 +86,17 @@
 
       enriched.forEach(wish => {
         const li = document.createElement('li');
-        li.innerHTML = `<strong>${wish.text}</strong> – ${wish.amount} €<br/>
+        li.innerHTML = `<strong>${wish.text}</strong> – ${wish.amount} €
+          <button class="inline-btn" onclick="deleteWish(${wish.id})">🗑️</button><br/>
           <span>Bereits zugesagt: ${wish.total} €</span>`;
 
         if (wish.related.length > 0) {
           const contribs = document.createElement('div');
           contribs.className = 'contributions';
           contribs.innerHTML = '<ul>' + wish.related.map(c => `
-            <li>${c.contributor} (${c.phone_number || 'keine Nummer'}): ${c.amount_contributed} €</li>
+            <li>${c.contributor} (${c.phone_number || 'keine Nummer'}): ${c.amount_contributed} €
+              <button class="inline-btn" onclick="deleteContribution(${c.id})">🗑️</button>
+            </li>
           `).join('') + '</ul>';
           li.appendChild(contribs);
         }
