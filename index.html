@@ -3,98 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geschenke für Clara & Simon</title>
+  <title>Geschenke für das Brautpaar</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f9f9f9;
-      color: #333;
-    }
-    header {
-      background-color: #4caf50;
-      color: white;
-      padding: 1em;
-      text-align: center;
-    }
-    main {
-      max-width: 800px;
-      margin: 2em auto;
-      padding: 0 1em;
-    }
-    h1 {
-      font-size: 1.8em;
-      margin-bottom: 0.2em;
-    }
-    p.intro {
-      font-size: 1.1em;
-      color: #555;
-      margin-bottom: 2em;
-    }
-    input, button {
-      display: block;
-      margin-top: 0.5em;
-      padding: 0.6em;
-      width: 100%;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-    }
-    button {
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a045;
-    }
-    li {
-      background: white;
-      padding: 1em;
-      border-radius: 8px;
-      margin-bottom: 1.5em;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      display: flex;
-      gap: 1em;
-      flex-direction: row;
-      align-items: flex-start;
-    }
-    .wish-image {
-      flex: 0 0 60px;
-    }
-    .wish-image img {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 5px;
-    }
-    .wish-content {
-      flex: 1;
-    }
-    .contribution-info {
-      margin-top: 0.5em;
-      font-size: 0.95em;
-      color: #666;
-    }
+    body { font-family: sans-serif; max-width: 700px; margin: 2em auto; }
+    h1 { color: #4caf50; }
+    input, button { display: block; margin-top: 0.5em; padding: 0.5em; width: 100%; }
+    li { margin-bottom: 1.5em; display: flex; gap: 1em; align-items: flex-start; background: #f8f8f8; padding: 1em; border-radius: 8px; }
+    .image-wrapper img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
+    .content-wrapper { flex: 1; }
+    .beitrag { color: #555; font-size: 0.9em; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Geschenkbeiträge für Clara & Simon</h1>
-  </header>
-  <main>
-    <p class="intro">
-      Clara und Simon heiraten! 🎉<br />
-      Um ihnen eine besondere Freude zu machen, haben wir als Gäste die Möglichkeit,
-      uns an ihren Herzenswünschen zu beteiligen – entweder allein oder gemeinsam mit anderen.<br />
-      Ich, Ben – der Trauzeuge – organisiere diese Wunschseite. Danke, dass ihr dabei seid!
-    </p>
-
-    <ul id="wishlist"></ul>
-  </main>
+  <h1>Geschenkbeiträge</h1>
+  <ul id="wishlist"></ul>
 
   <script>
     const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
@@ -104,21 +27,21 @@
 
     function getImageURL(wishText) {
       const map = {
-        'Brotmesser': 'https://source.unsplash.com/60x60/?knife',
-        'Strandzelt': 'https://source.unsplash.com/60x60/?beach,tent',
-        'Wochenendtrip': 'https://source.unsplash.com/60x60/?weekend,trip',
-        'Tagestrip': 'https://source.unsplash.com/60x60/?city,trip',
-        'Aktivitäten': 'https://source.unsplash.com/60x60/?activity,fun',
-        'Salatschleuder': 'https://source.unsplash.com/60x60/?salad,kitchen',
-        'Sonos': 'https://source.unsplash.com/60x60/?speaker',
-        'Koffer': 'https://source.unsplash.com/60x60/?luggage',
-        'Tischtennis': 'https://source.unsplash.com/60x60/?pingpong',
-        'Reise': 'https://source.unsplash.com/60x60/?travel'
+        'Brotmesser': 'knife',
+        'Strandzelt': 'beach',
+        'Wochenendtrip': 'travel',
+        'Tagestrip': 'city',
+        'Aktivitäten': 'fun',
+        'Salatschleuder': 'kitchen',
+        'Sonos': 'speaker',
+        'Koffer': 'luggage',
+        'Tischtennis': 'pingpong',
+        'Reise': 'airplane'
       };
       for (const key in map) {
-        if (wishText.includes(key)) return map[key];
+        if (wishText.includes(key)) return `https://loremflickr.com/60/60/${map[key]}`;
       }
-      return 'https://source.unsplash.com/60x60/?gift';
+      return 'https://loremflickr.com/60/60/gift';
     }
 
     async function loadWishes() {
@@ -135,17 +58,15 @@
         const item = document.createElement('li');
 
         const image = document.createElement('div');
-        image.className = 'wish-image';
+        image.className = 'image-wrapper';
         image.innerHTML = `<img src="${getImageURL(wish.text)}" alt="Bild">`;
 
         const content = document.createElement('div');
-        content.className = 'wish-content';
+        content.className = 'content-wrapper';
         content.innerHTML = `
           <strong>${wish.text}</strong><br />
-          <span class="contribution-info">
-            Wunschbetrag: ${wish.amount} €<br />
-            Bereits zugesagt: ${total} €
-          </span>
+          Gewünschter Betrag: ${wish.amount} €<br />
+          Bereits zugesagt: ${total} €<br />
           <input type="text" id="name-${wish.id}" placeholder="Dein Name" />
           <input type="number" id="amount-${wish.id}" placeholder="Betrag in €" />
           <button onclick="contribute(${wish.id})">Ich beteilige mich</button>
