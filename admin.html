@@ -35,9 +35,24 @@
   </div>
 
   <script>
-    function checkPW() {
-      const pw = document.getElementById('pw').value.trim();
-      if (pw === 'wilnsdorf') {
+    const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvamNjc2ZkZnJrdW96cXhqY3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODczOTEsImV4cCI6MjA2NTU2MzM5MX0.wNO2Mxq3WLqFO-2I84_EyATSEvqaw4saLlIhv9oyGXg';
+    const { createClient } = supabase;
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function checkPW() {
+      const entered = document.getElementById('pw').value.trim();
+      const { data, error } = await client
+        .from('passwords')
+        .select('pw')
+        .eq('context', 'admin')
+        .maybeSingle();
+
+      if (error || !data) {
+        return alert('Fehler beim Abrufen des Passworts');
+      }
+
+      if (entered === data.pw) {
         document.getElementById('login').style.display = 'none';
         document.getElementById('main').style.display = 'block';
         loadWishes();
@@ -45,11 +60,6 @@
         alert('Falsches Passwort');
       }
     }
-
-    const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvamNjc2ZkZnJrdW96cXhqY3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODczOTEsImV4cCI6MjA2NTU2MzM5MX0.wNO2Mxq3WLqFO-2I84_EyATSEvqaw4saLlIhv9oyGXg';
-    const { createClient } = supabase;
-    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function addWish() {
       const text = document.getElementById('wish-text').value.trim();
