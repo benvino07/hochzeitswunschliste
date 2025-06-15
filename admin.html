@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wünsche eintragen (Admin)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
@@ -45,18 +45,22 @@
     }
 
     async function deleteWish(id) {
-      if (confirm('Wunsch wirklich löschen?')) {
-        await client.from('wishes').delete().eq('id', id);
-        loadWishes();
-      }
+      const { error } = await client.from('wishes').delete().eq('id', id);
+      if (error) alert('Fehler beim Löschen: ' + error.message);
+      else loadWishes();
     }
 
-    async function editWish(id, oldText, oldAmount) {
+    async function editText(id, oldText) {
       const newText = prompt('Neuer Wunschtext:', oldText);
       if (newText === null) return;
+      await client.from('wishes').update({ text: newText }).eq('id', id);
+      loadWishes();
+    }
+
+    async function editAmount(id, oldAmount) {
       const newAmount = parseFloat(prompt('Neuer Betrag in €:', oldAmount));
       if (isNaN(newAmount)) return alert('Ungültiger Betrag');
-      await client.from('wishes').update({ text: newText, amount: newAmount }).eq('id', id);
+      await client.from('wishes').update({ amount: newAmount }).eq('id', id);
       loadWishes();
     }
 
@@ -76,15 +80,22 @@
         const ctrl = document.createElement('div');
         ctrl.className = 'controls';
 
-        const editBtn = document.createElement('button');
-        editBtn.textContent = '✏️ Bearbeiten';
-        editBtn.onclick = () => editWish(wish.id, wish.text, wish.amount);
-        ctrl.appendChild(editBtn);
+        const editTextBtn = document.createElement('button');
+        editTextBtn.textContent = '✏️ Text ändern';
+        editTextBtn.onclick = () => editText(wish.id, wish.text);
+        ctrl.appendChild(editTextBtn);
+
+        const editAmountBtn = document.createElement('button');
+        editAmountBtn.textContent = '💶 Betrag ändern';
+        editAmountBtn.onclick = () => editAmount(wish.id, wish.amount);
+        ctrl.appendChild(editAmountBtn);
 
         if (related.length === 0) {
           const delBtn = document.createElement('button');
           delBtn.textContent = '🗑️ Löschen';
-          delBtn.onclick = () => deleteWish(wish.id);
+          delBtn.onclick = () => {
+            if (confirm('Wunsch wirklich löschen?')) deleteWish(wish.id);
+          };
           ctrl.appendChild(delBtn);
         }
 
