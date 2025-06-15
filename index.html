@@ -32,12 +32,13 @@
     // Supabase Setup
     const SUPABASE_URL = 'https://sojccsfdfrkuozqxjcqh.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvamNjc2ZkZnJrdW96cXhqY3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODczOTEsImV4cCI6MjA2NTU2MzM5MX0.wNO2Mxq3WLqFO-2I84_EyATSEvqaw4saLlIhv9oyGXg';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { createClient } = supabase;
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function addWish() {
       const text = document.getElementById('wish-text').value;
       if (!text) return alert('Bitte Wunsch eingeben');
-      const { error } = await supabase.from('wishes').insert([{ text }]);
+      const { error } = await client.from('wishes').insert([{ text }]);
       if (error) alert('Fehler: ' + error.message);
       else {
         document.getElementById('wish-text').value = '';
@@ -48,12 +49,12 @@
     async function reserveWish(id) {
       const name = prompt('Dein Name?');
       if (!name) return;
-      await supabase.from('wishes').update({ reserved_by: name }).eq('id', id);
+      await client.from('wishes').update({ reserved_by: name }).eq('id', id);
       loadWishes();
     }
 
     async function loadWishes() {
-      const { data } = await supabase.from('wishes').select('*').order('id');
+      const { data } = await client.from('wishes').select('*').order('id');
       const list = document.getElementById('wishlist');
       list.innerHTML = '';
       data.forEach(wish => {
