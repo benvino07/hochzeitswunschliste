@@ -66,26 +66,25 @@
     async function deleteWish(id) {
       if (!confirm('Wunsch wirklich löschen?')) return;
 
-      // Lösche zuerst alle Beiträge zu diesem Wunsch
       const { error: contribError } = await client.from('contributions').delete().eq('wish_id', id);
       if (contribError) {
         alert('Fehler beim Löschen der Beiträge: ' + contribError.message);
         return;
       }
 
-      // Dann Wunsch selbst löschen
       const { error: wishError } = await client.from('wishes').delete().eq('id', id);
       if (wishError) alert('Fehler beim Löschen des Wunschs: ' + wishError.message);
-      else await loadWishes();
+      else loadWishes();
     }
 
     async function deleteContribution(id) {
       if (!confirm('Beitrag wirklich löschen?')) return;
+
       const { error } = await client.from('contributions').delete().eq('id', id);
       if (error) {
         alert('Fehler beim Löschen des Beitrags: ' + error.message);
       } else {
-        await loadWishes();
+        loadWishes();
       }
     }
 
@@ -111,7 +110,7 @@
       enriched.forEach(wish => {
         const li = document.createElement('li');
         li.innerHTML = `<strong>${wish.text}</strong> – ${wish.amount} €
-          <button class="inline-btn" onclick="deleteWish(${wish.id})">🗑️</button><br/>
+          <button class="inline-btn" onclick="deleteWish('${wish.id}')">🗑️</button><br/>
           <span>Bereits zugesagt: ${wish.total} €</span>`;
 
         if (wish.related.length > 0) {
@@ -119,7 +118,7 @@
           contribs.className = 'contributions';
           contribs.innerHTML = '<ul>' + wish.related.map(c => `
             <li>${c.contributor} (${c.phone_number || 'keine Nummer'}): ${c.amount_contributed} €
-              <button class="inline-btn" onclick="deleteContribution(${c.id})">🗑️</button>
+              <button class="inline-btn" onclick="deleteContribution('${c.id}')">🗑️</button>
             </li>
           `).join('') + '</ul>';
           li.appendChild(contribs);
