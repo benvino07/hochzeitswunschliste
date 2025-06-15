@@ -65,18 +65,16 @@
 
     async function deleteWish(id) {
       if (!confirm('Wunsch wirklich löschen?')) return;
-      if (!confirm('Bist du dir ganz sicher?')) return;
       const { error } = await client.from('wishes').delete().eq('id', id);
       if (error) alert('Fehler: ' + error.message);
-      else loadWishes();
+      else await loadWishes();
     }
 
     async function deleteContribution(id) {
       if (!confirm('Beitrag wirklich löschen?')) return;
-      if (!confirm('Bist du dir ganz sicher?')) return;
       const { error } = await client.from('contributions').delete().eq('id', id);
       if (error) alert('Fehler: ' + error.message);
-      else loadWishes();
+      else await loadWishes();
     }
 
     async function loadWishes() {
