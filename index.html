@@ -10,7 +10,7 @@
     h1 { color: #4caf50; }
     input, button { display: block; margin-top: 0.5em; padding: 0.5em; width: 100%; }
     li { margin-bottom: 1.5em; display: flex; gap: 1em; align-items: flex-start; background: #f8f8f8; padding: 1em; border-radius: 8px; }
-    .image-wrapper img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
+    .emoji { font-size: 2em; width: 60px; text-align: center; }
     .content-wrapper { flex: 1; }
     .beitrag { color: #555; font-size: 0.9em; }
   </style>
@@ -25,23 +25,23 @@
     const { createClient } = supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function getImageURL(wishText) {
+    function getEmoji(wishText) {
       const map = {
-        'Brotmesser': 'knife',
-        'Strandzelt': 'beach',
-        'Wochenendtrip': 'travel',
-        'Tagestrip': 'city',
-        'Aktivitäten': 'fun',
-        'Salatschleuder': 'kitchen',
-        'Sonos': 'speaker',
-        'Koffer': 'luggage',
-        'Tischtennis': 'pingpong',
-        'Reise': 'airplane'
+        'Brotmesser': '🔪',
+        'Strandzelt': '⛱️',
+        'Wochenendtrip': '🧳',
+        'Tagestrip': '🗺️',
+        'Aktivitäten': '🎯',
+        'Salatschleuder': '🥗',
+        'Sonos': '🔊',
+        'Koffer': '🧳',
+        'Tischtennis': '🏓',
+        'Reise': '✈️'
       };
       for (const key in map) {
-        if (wishText.includes(key)) return `https://loremflickr.com/60/60/${map[key]}`;
+        if (wishText.includes(key)) return map[key];
       }
-      return 'https://loremflickr.com/60/60/gift';
+      return '🎁';
     }
 
     async function loadWishes() {
@@ -57,9 +57,9 @@
 
         const item = document.createElement('li');
 
-        const image = document.createElement('div');
-        image.className = 'image-wrapper';
-        image.innerHTML = `<img src="${getImageURL(wish.text)}" alt="Bild">`;
+        const emoji = document.createElement('div');
+        emoji.className = 'emoji';
+        emoji.textContent = getEmoji(wish.text);
 
         const content = document.createElement('div');
         content.className = 'content-wrapper';
@@ -72,7 +72,7 @@
           <button onclick="contribute(${wish.id})">Ich beteilige mich</button>
         `;
 
-        item.appendChild(image);
+        item.appendChild(emoji);
         item.appendChild(content);
         list.appendChild(item);
       });
