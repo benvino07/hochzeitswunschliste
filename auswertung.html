@@ -33,6 +33,14 @@
     const { createClient } = supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.cookie.includes('auswertung_authenticated=true')) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('main').style.display = 'block';
+        loadWishes();
+      }
+    });
+
     async function checkPW() {
       const entered = document.getElementById('pw').value.trim();
       const { data, error } = await client
@@ -46,6 +54,7 @@
       }
 
       if (entered === data.pw) {
+        document.cookie = "auswertung_authenticated=true; path=/; max-age=3600";
         document.getElementById('login').style.display = 'none';
         document.getElementById('main').style.display = 'block';
         loadWishes();
@@ -59,7 +68,7 @@
       if (!confirm('Bist du dir ganz sicher?')) return;
       const { error } = await client.from('wishes').delete().eq('id', id);
       if (error) alert('Fehler: ' + error.message);
-      else loadWishes();
+      else await loadWishes();
     }
 
     async function deleteContribution(id) {
@@ -67,12 +76,17 @@
       if (!confirm('Bist du dir ganz sicher?')) return;
       const { error } = await client.from('contributions').delete().eq('id', id);
       if (error) alert('Fehler: ' + error.message);
-      else loadWishes();
+      else await loadWishes();
     }
 
     async function loadWishes() {
-      const { data: wishes } = await client.from('wishes').select('*');
-      const { data: contributions } = await client.from('contributions').select('*');
+      const { data: wishes, error: wishError } = await client.from('wishes').select('*');
+      const { data: contributions, error: contribError } = await client.from('contributions').select('*');
+      if (wishError || contribError) {
+        alert('Fehler beim Laden der Daten.');
+        return;
+      }
+
       const list = document.getElementById('wishlist');
       list.innerHTML = '';
 
