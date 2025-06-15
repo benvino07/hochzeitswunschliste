@@ -74,6 +74,22 @@
       color: #555;
       font-size: 0.9em;
     }
+    .progress {
+      height: 8px;
+      background: #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 0.4em 0 0.6em 0;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #4caf50;
+    }
+    .fulfilled {
+      color: #999;
+      font-style: italic;
+      margin-top: 0.5em;
+    }
   </style>
 </head>
 <body>
@@ -84,8 +100,7 @@
     <p class="intro">
       Clara und Simon heiraten! 🎉<br />
       Um ihnen eine besondere Freude zu machen, können wir ihnen dank dieser kleinen Website (danke ChatGPT) zielgerichtete Wünsche zukommen lassen!<br />
-      Ich, Ben (der Trauzeuge) organisiere diese Wunschseite gerne:
-      Wenn ihr euch eintragt, vernetze ich mich mit euch (deshalb die Telefonnummer) und wir besprechen die Details :)
+      Ich, Ben (der Trauzeuge) organisiere diese Wunschseite gerne: Wenn ihr euch eintragt, vernetze ich mich mit euch (deshalb die Telefonnummer) und wir besprechen die Details :)
     </p>
 
     <ul id="wishlist"></ul>
@@ -126,6 +141,7 @@
       wishes.forEach(wish => {
         const related = contributions.filter(c => c.wish_id === wish.id);
         const total = related.reduce((sum, c) => sum + Number(c.amount_contributed), 0);
+        const percent = Math.min(100, Math.round((total / wish.amount) * 100));
 
         const item = document.createElement('li');
 
@@ -135,15 +151,27 @@
 
         const content = document.createElement('div');
         content.className = 'content-wrapper';
+
         content.innerHTML = `
           <strong>${wish.text}</strong><br />
           Gewünschter Betrag: ${wish.amount} €<br />
-          Bereits zugesagt: ${total} €<br />
-          <input type="text" id="name-${wish.id}" placeholder="Dein Name" />
-          <input type="text" id="phone-${wish.id}" placeholder="Deine Telefonnummer" />
-          <input type="number" id="amount-${wish.id}" placeholder="Betrag in €" />
-          <button onclick="contribute(${wish.id})">Ich beteilige mich</button>
+          Bereits zugesagt: ${total} €
+          <div class="progress"><div class="progress-bar" style="width: ${percent}%"></div></div>
         `;
+
+        if (total >= wish.amount) {
+          const info = document.createElement('div');
+          info.className = 'fulfilled';
+          info.textContent = '🎉 Ziel erreicht – Vielen Dank!';
+          content.appendChild(info);
+        } else {
+          content.innerHTML += `
+            <input type="text" id="name-${wish.id}" placeholder="Dein Name" />
+            <input type="text" id="phone-${wish.id}" placeholder="Deine Telefonnummer" />
+            <input type="number" id="amount-${wish.id}" placeholder="Betrag in €" />
+            <button onclick="contribute(${wish.id})">Ich beteilige mich</button>
+          `;
+        }
 
         item.appendChild(emoji);
         item.appendChild(content);
