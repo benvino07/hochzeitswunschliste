@@ -100,7 +100,8 @@
     <p class="intro">
       Clara und Simon heiraten! 🎉<br />
       Um ihnen eine besondere Freude zu machen, können wir ihnen dank dieser kleinen Website (danke ChatGPT) zielgerichtete Wünsche zukommen lassen!<br />
-      Ich, Ben (der Trauzeuge) organisiere diese Wunschseite gerne: Wenn ihr euch eintragt, vernetze ich mich mit euch (deshalb die Telefonnummer) und wir besprechen die Details :)
+      Ich, Ben (der Trauzeuge) organisiere diese Wunschseite gerne: Wenn ihr euch eintragt, vernetze ich mich mit euch (deshalb die Telefonnummer) und wir besprechen die Details :)<br />
+      Falls ein Link zum Geschenk angegeben ist, könnt ihr das auch einfach direkt selbst bestellen – dann entfällt die Telefonnummer.
     </p>
 
     <ul id="wishlist"></ul>
@@ -159,6 +160,10 @@
           <div class="progress"><div class="progress-bar" style="width: ${percent}%"></div></div>
         `;
 
+        if (wish.url) {
+          content.innerHTML += `<div><a href="${wish.url}" target="_blank">🔗 Zum Geschenk</a></div>`;
+        }
+
         if (total >= wish.amount) {
           const info = document.createElement('div');
           info.className = 'fulfilled';
@@ -167,7 +172,7 @@
         } else {
           content.innerHTML += `
             <input type="text" id="name-${wish.id}" placeholder="Dein Name" />
-            <input type="text" id="phone-${wish.id}" placeholder="Deine Telefonnummer" />
+            ${!wish.url ? `<input type="text" id="phone-${wish.id}" placeholder="Deine Telefonnummer" />` : ''}
             <input type="number" id="amount-${wish.id}" placeholder="Betrag in €" />
             <button onclick="contribute(${wish.id})">Ich beteilige mich</button>
           `;
@@ -181,12 +186,13 @@
 
     async function contribute(wishId) {
       const name = document.getElementById(`name-${wishId}`).value;
-      const phone = document.getElementById(`phone-${wishId}`).value;
+      const phoneField = document.getElementById(`phone-${wishId}`);
+      const phone = phoneField ? phoneField.value : null;
       const amount = parseFloat(document.getElementById(`amount-${wishId}`).value);
-      if (!name || !phone || isNaN(amount)) return alert('Bitte Name, Telefonnummer und Betrag angeben.');
+      if (!name || isNaN(amount) || (phoneField && !phone)) return alert('Bitte alle erforderlichen Felder ausfüllen.');
 
       const { error } = await client.from('contributions').insert([
-        { wish_id: wishId, contributor: name, phone_number: phone, amount_contributed: amount }
+        { wish_id: wishId, contributor: name, phone_number: phone || '', amount_contributed: amount }
       ]);
       if (error) alert('Fehler: ' + error.message);
       else loadWishes();
